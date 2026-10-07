@@ -1,26 +1,38 @@
-# ===========================================================
-# ©️ 2025-26 All Rights Reserved by Purvi Bots (Im-Notcoder) 🚀
-# 
-# This source code is under MIT License 📜
-# ❌ Unauthorized forking, importing, or using this code
-#    without giving proper credit will result in legal action ⚠️
-# 
-# 📩 DM for permission : @TheSigmaCoder
-# ===========================================================
-
 import asyncio
 import importlib
+import os
 
+from aiohttp import web
 from pyrogram import idle
-from pytgcalls.exceptions import NoActiveGroupCall
+from pyrogram.errors import NoActiveGroupCall
 
 import config
 from ShiviMusic import LOGGER, app, userbot
 from ShiviMusic.core.call import Shivi
 from ShiviMusic.misc import sudo
 from ShiviMusic.plugins import ALL_MODULES
-from ShiviMusic.utils.database import get_banned_users, get_gbanned
+from ShiviMusic.utils.database import get_banned_users, get_banned
 from config import BANNED_USERS
+
+
+async def health(request):
+    return web.Response(text="Musku Music Bot is running!")
+
+
+async def start_web_server():
+    web_app = web.Application()
+    web_app.router.add_get("/", health)
+    web_app.router.add_get("/health", health)
+
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+    LOGGER(__name__).info(f"Web server started on port {port}")
+    return runner
 
 
 async def init():
@@ -31,50 +43,60 @@ async def init():
         and not config.STRING4
         and not config.STRING5
     ):
-        LOGGER(__name__).error("𝗦𝗧𝗥𝗜𝗡𝗚 𝗦𝗘𝗦𝗦𝗜𝗢𝗡 𝗡𝗢𝗧 𝗙𝗜𝗟𝗟𝗘𝗗 🙃, 𝗣𝗟𝗘𝗔𝗦𝗘 𝗙𝗜𝗟𝗟 𝗔 𝗣𝗬𝗥𝗢𝗚𝗥𝗔𝗠 𝗦𝗘𝗦𝗦𝗜𝗢𝗡...🙂")
+        LOGGER(__name__).error(
+            "STRING SESSION NOT FILLED ⚠️, PLEASE FILL A PYROGRAM SESSION."
+        )
         exit()
+
     await sudo()
+
+    web_runner = await start_web_server()
+
     try:
-        users = await get_gbanned()
+        users = await get_banned()
         for user_id in users:
             BANNED_USERS.add(user_id)
+
         users = await get_banned_users()
         for user_id in users:
             BANNED_USERS.add(user_id)
-    except:
+    except Exception:
         pass
+
     await app.start()
+
     for all_module in ALL_MODULES:
-        importlib.import_module("ShiviMusic.plugins" + all_module)
-    LOGGER("ShiviMusic.plugins").info("𝗔𝗟𝗟 𝗣𝗟𝗨𝗚𝗜𝗡𝗦 𝗟𝗢𝗔𝗗𝗘𝗗 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟𝗟𝗬....🥳..")
+        importlib.import_module("ShiviMusic.plugins." + all_module)
+
+    LOGGER("ShiviMusic.plugins").info("ALL PLUGINS LOADED SUCCESSFULLY...")
+
     await userbot.start()
     await Shivi.start()
+
     try:
-        await Shivi.stream_call("https://te.legra.ph/file/29f784eb49d230ab62e9e.mp4")
+        await Shivi.stream_call(
+            "https://telegra.ph/file/29f784eb49d230ab62e9.mp4"
+        )
     except NoActiveGroupCall:
         LOGGER("ShiviMusic").error(
-            "𝗣𝗹𝗭 𝗦𝗧𝗔𝗥𝗧 𝗬𝗢𝗨𝗥 𝗟𝗢𝗚 𝗚𝗥𝗢𝗨𝗣/𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗩𝗢𝗜𝗖𝗘𝗖𝗛𝗔𝗧... 😒\n\n𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗦𝗧𝗢𝗣........🤕"
+            "PLEASE START YOUR LOG GROUP/CHANNEL VOICECHAT."
         )
         exit()
-    except:
+    except Exception:
         pass
+
     await Shivi.decorators()
-    LOGGER("ShiviMusic").info(
-        "╔═════ஜ۩۞۩ஜ════╗\n  ☠︎︎ 𝗠𝗔𝗗𝗘 𝗕𝗬 𝗣𝗨𝗥𝗩𝗜 𝗕𝗢𝗧𝗦 ☠︎︎\n╚═════ஜ۩۞۩ஜ════╝"
-    )
+
+    LOGGER("ShiviMusic").info("MUSIC BOT STARTED SUCCESSFULLY...")
+
     await idle()
+
+    await web_runner.cleanup()
     await app.stop()
     await userbot.stop()
-    LOGGER("ShiviMusic").info("𝗦𝗧𝗢𝗣 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧...🥹")
+
+    LOGGER("ShiviMusic").info("STOP MUSIC BOT...")
 
 
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(init())
-
-# ===========================================================
-# ©️ 2025-26 All Rights Reserved by Purvi Bots (Im-Notcoder) 😎
-# 
-# 🧑‍💻 Developer : t.me/TheSigmaCoder
-# 🔗 Source link : GitHub.com/Im-Notcoder/Shivi-V2
-# 📢 Telegram channel : t.me/Purvi_Bots
-# ===========================================================
